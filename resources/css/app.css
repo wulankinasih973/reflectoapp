@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --mint: #A1E3D8;
+}
+
+.text-mint {
+    color: var(--mint);
+}
