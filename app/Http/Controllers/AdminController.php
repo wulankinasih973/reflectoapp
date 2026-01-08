@@ -18,43 +18,70 @@ class AdminController extends Controller
     // ================================
     public function index(Request $request)
     {
-        $journals = JournalEntry::all();
-        $totalUsers = User::where('role_id', '!=', 1)->count();
-        $totalJournals = $journals->count();
+    $filter = $request->input('filter', 'latest');
+    $search = $request->input('search');
 
-        $avgMood = round(
-            JournalEntry::pluck('skor_mood')
-                ->map(fn ($v) => is_numeric($v) ? (int) $v : null)
-                ->filter()
-                ->avg(),
-            2
-        );
+    // ================================
+    // FILTER + SEARCH
+    // ================================
+    $usersWithJournal = User::whereHas('journalEntries')
+        ->when($search, function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%");
+        })
+        ->withCount('journalEntries')
+        ->with('journalEntries')
+        ->when($filter === 'oldest', function ($q) {
+            $q->orderBy(
+                JournalEntry::select('created_at')
+                    ->whereColumn('journal_entries.user_id', 'users.id')
+                    ->oldest()
+                    ->limit(1)
+            );
+        }, function ($q) {
+            // default: latest
+            $q->orderByDesc(
+                JournalEntry::select('created_at')
+                    ->whereColumn('journal_entries.user_id', 'users.id')
+                    ->latest()
+                    ->limit(1)
+            );
+        })
+        ->get();
 
-        $search = $request->input('search');
-        $usersWithJournal = User::whereHas('journalEntries')
-            ->where(function ($q) use ($search) {
-                if ($search) {
-                    $q->where('name', 'like', "%$search%")
-                      ->orWhere('email', 'like', "%$search%");
-                }
-            })
-            ->withCount('journalEntries')
-            ->get();
+    // ================================
+    // STATISTIK
+    // ================================
+    $journals = JournalEntry::all();
 
-        $accountRequests = AccountRequest::with('user')
-            ->where('status', 'pending')
-            ->latest()
-            ->get();
+    $totalUsers    = User::where('role_id', '!=', 1)->count();
+    $totalJournals = $journals->count();
 
-        return view('dashboard', compact(
-            'journals',
-            'totalUsers',
-            'totalJournals',
-            'avgMood',
-            'usersWithJournal',
-            'search',
-            'accountRequests'
-        ));
+    $avgMood = round(
+        $journals->pluck('skor_mood')
+            ->map(fn ($v) => is_numeric($v) ? (int) $v : null)
+            ->filter()
+            ->avg(),
+        2
+    );
+
+    // ================================
+    // ACCOUNT REQUEST
+    // ================================
+    $accountRequests = AccountRequest::with('user')
+        ->where('status', 'pending')
+        ->latest()
+        ->get();
+
+    return view('dashboard', compact(
+        'journals',
+        'totalUsers',
+        'totalJournals',
+        'avgMood',
+        'usersWithJournal',
+        'search',
+        'accountRequests'
+    ));
     }
 
     // ================================

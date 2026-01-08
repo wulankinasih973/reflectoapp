@@ -79,24 +79,40 @@
                            class="mt-1 block w-full border rounded px-3 py-2" required>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Password Baru</label>
-                    <input type="password" name="password"
-                           class="mt-1 block w-full border rounded px-3 py-2" required>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Masukkan Lagi Password Baru</label>
-                    <input type="password" name="password_confirmation"
-                           class="mt-1 block w-full border rounded px-3 py-2" required>
-                </div>
-
-                <button type="submit"
-                        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 mt-6">
-                    Simpan Password
-                </button>
-            </form>
+               <div>
+    <label class="block text-sm font-medium text-gray-700">Password Baru</label>
+        <div class="relative">
+            <input
+                type="password"
+                id="password"
+                name="password"
+                class="mt-1 block w-full border rounded px-3 py-2 pr-10"
+                required>
+            <button type="button"
+                class="toggle-password absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
+                data-target="password">
+                👁️
+            </button>
         </div>
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700">Masukkan Lagi Password Baru</label>
+        <div class="relative">
+            <input
+                type="password"
+                id="password_confirmation"
+                name="password_confirmation"
+                class="mt-1 block w-full border rounded px-3 py-2 pr-10"
+                required
+            >
+            <button type="button"
+                class="toggle-password absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
+                data-target="password_confirmation">
+                👁️
+            </button>
+        </div>
+    </div>
 
         {{-- PREVIEW TAB --}}
         <div id="preview-tab-content" class="hidden">
@@ -111,6 +127,17 @@
 
     </div>
 </div>
+<script>
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', () => {
+            const targetId = button.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            button.textContent = type === 'password' ? '👁️' : '🙈';
+        });
+    });
+</script>
 @endsection
 
 @section('scripts')

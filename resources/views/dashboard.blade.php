@@ -166,7 +166,6 @@
 
         {{-- ADMIN DASHBOARD --}}
         @if(auth()->check() && auth()->user()->role->name === 'admin')
-            {{-- Admin Stats, Export, List User (tidak diubah) --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <x-admin-stat title="Total User" value="{{ $totalUsers }}" icon="fa-solid fa-users" />
                 <x-admin-stat title="Total Jurnal" value="{{ $totalJournals }}" icon="fa-solid fa-book" />
@@ -201,8 +200,12 @@
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari user..." class="border rounded px-3 py-2 w-full">
                         <select name="filter" class="border rounded px-3 py-2">
                             <option value="">Filter...</option>
-                            <option value="newest" {{ request('filter')=='newest'?'selected':'' }}>Terbaru</option>
-                            <option value="oldest" {{ request('filter')=='oldest'?'selected':'' }}>Terlama</option>
+                            <option value="latest" {{ request('filter')=='latest'?'selected':'' }}>
+                                Terbaru
+                            </option>
+                            <option value="oldest" {{ request('filter')=='oldest'?'selected':'' }}>
+                                Terlama
+                            </option>
                         </select>
                         <button class="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800">Cari</button>
                     </div>
@@ -216,6 +219,7 @@
                                 <th class="px-3 py-2">Nama</th>
                                 <th class="px-3 py-2">Email</th>
                                 <th class="px-3 py-2">Jumlah Jurnal</th>
+                                <th class="px-3 py-2">Waktu Input</th>
                                 <th class="px-3 py-2">Aksi</th>
                             </tr>
                         </thead>
@@ -226,11 +230,18 @@
                                     <td class="px-3 py-2">{{ $u->name }}</td>
                                     <td class="px-3 py-2">{{ $u->email }}</td>
                                     <td class="px-3 py-2">{{ $u->journal_entries_count }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">
+                                        {{ optional($u->journalEntries->sortByDesc('created_at')->first())->created_at?->format('d M Y H:i') ?? '-' }}
+                                    </td>
                                     <td class="px-3 py-2 text-sm">
                                         <span onclick="alert('Forbidden: Admin tidak boleh melihat jurnal user.')"
                                               class="inline-block mr-4 text-[#0C6B4D] hover:text-[#074d36] underline underline-offset-2 cursor-pointer">
                                             Lihat Detail
                                         </span>
+                                        {{-- <a href="{{ route('dashboard') }}"
+                                                class="inline-block mr-4 text-[#0C6B4D] hover:text-[#074d36] underline underline-offset-2">
+                                                    Lihat Detail
+                                        </a> --}}
                                         <span onclick="openDeleteModal({{ $u->id }})"
                                               class="inline-block text-red-600 hover:text-red-800 underline underline-offset-2 cursor-pointer">
                                             Hapus
@@ -246,7 +257,7 @@
                     </table>
                 </div>
             </div>
-        @endif {{-- <-- Tutup ADMIN DASHBOARD --}}
+        @endif
 
     </div>
 </div>
