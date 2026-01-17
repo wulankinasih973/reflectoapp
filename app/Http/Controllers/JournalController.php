@@ -44,7 +44,7 @@ class JournalController extends Controller
             'skor_stres' => $skor_stres,
         ]);
 
-        // Feedback dinamis berdasarkan skor
+        // Feedback berdasarkan skor
         $pesan = 'Data berhasil disimpan. ';
         if ($skor_kecemasan > 3.5 || $skor_stres > 3.5) {
             $pesan .= '⚠️ Anda tampak sedang mengalami tekanan. Cobalah istirahat, meditasi ringan, atau journaling tambahan.';
@@ -63,7 +63,7 @@ class JournalController extends Controller
     {
     $journal = JournalEntry::findOrFail($id);
 
-    // Pastikan hanya pemilik jurnal yang bisa menghapus
+    // disini hanya pemilik jurnal yang bisa menghapus
     if ($journal->user_id !== auth()->id()) {
         abort(403);
     }

@@ -35,7 +35,7 @@
                 Reflecto
             </a>
 
-            <!-- Menu kanan -->
+            <!-- Menu -->
             <div class="flex items-center space-x-4">
                 @auth
                     <!-- Dashboard -->

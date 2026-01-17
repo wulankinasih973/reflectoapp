@@ -36,6 +36,8 @@ class DashboardController extends Controller
             $chartData = $journals->pluck('skor_mood')
                 ->map(fn ($v) => (float) $v)
                 ->toArray();
+                
+            // $chartData = array_fill(0, $journals->count(), (float) $avgMood);
 
             // Quotes
             $allQuotes = [

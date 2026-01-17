@@ -229,9 +229,9 @@
                                     <td class="px-3 py-2">{{ $index + 1 }}</td>
                                     <td class="px-3 py-2">{{ $u->name }}</td>
                                     <td class="px-3 py-2">{{ $u->email }}</td>
-                                    <td class="px-3 py-2">{{ $u->journal_entries_count }}</td>
+                                    <td class="px-3 py-2">{{ $u->journal_count }}</td>
                                     <td class="px-3 py-2 text-sm text-gray-600">
-                                        {{ optional($u->journalEntries->sortByDesc('created_at')->first())->created_at?->format('d M Y H:i') ?? '-' }}
+                                        {{ \Carbon\Carbon::parse($u->last_journal_at)->format('d M Y H:i') }}
                                     </td>
                                     <td class="px-3 py-2 text-sm">
                                         <span onclick="alert('Forbidden: Admin tidak boleh melihat jurnal user.')"

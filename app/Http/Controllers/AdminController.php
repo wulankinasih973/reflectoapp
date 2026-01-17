@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\AccountRequest;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -18,70 +19,86 @@ class AdminController extends Controller
     // ================================
     public function index(Request $request)
     {
-    $filter = $request->input('filter', 'latest');
-    $search = $request->input('search');
+        $filter = $request->input('filter', 'latest');
+        $search = $request->input('search');
 
-    // ================================
-    // FILTER + SEARCH
-    // ================================
-    $usersWithJournal = User::whereHas('journalEntries')
-        ->when($search, function ($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%");
-        })
-        ->withCount('journalEntries')
-        ->with('journalEntries')
-        ->when($filter === 'oldest', function ($q) {
-            $q->orderBy(
-                JournalEntry::select('created_at')
-                    ->whereColumn('journal_entries.user_id', 'users.id')
-                    ->oldest()
-                    ->limit(1)
-            );
-        }, function ($q) {
-            // default: latest
-            $q->orderByDesc(
-                JournalEntry::select('created_at')
-                    ->whereColumn('journal_entries.user_id', 'users.id')
-                    ->latest()
-                    ->limit(1)
-            );
-        })
-        ->get();
+        /**
+         * SUBQUERY:
+         * Ambil jurnal TERLAMA & TERBARU per user
+         */
+        $journalSub = JournalEntry::select(
+                'user_id',
+                DB::raw('MIN(created_at) as first_journal_at'),
+                DB::raw('MAX(created_at) as last_journal_at')
+            )
+            ->groupBy('user_id');
 
-    // ================================
-    // STATISTIK
-    // ================================
-    $journals = JournalEntry::all();
+        /**
+         * QUERY UTAMA USER
+         */
+        $journalSub = JournalEntry::select(
+        'user_id',
+        DB::raw('COUNT(*) as journal_count'),
+        DB::raw('MIN(created_at) as first_journal_at'),
+        DB::raw('MAX(created_at) as last_journal_at')
+            )
+            ->groupBy('user_id');
 
-    $totalUsers    = User::where('role_id', '!=', 1)->count();
-    $totalJournals = $journals->count();
+        $usersWithJournal = User::joinSub($journalSub, 'journals', function ($join) {
+                $join->on('journals.user_id', '=', 'users.id');
+            })
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('users.name', 'like', "%{$search}%")
+                        ->orWhere('users.email', 'like', "%{$search}%");
+                });
+            })
+            ->when(
+                $filter === 'oldest',
+                fn ($q) => $q->orderBy('journals.first_journal_at', 'asc'),
+                fn ($q) => $q->orderBy('journals.last_journal_at', 'desc')
+            )
+            ->select([
+                'users.*',
+                'journals.journal_count',
+                'journals.first_journal_at',
+                'journals.last_journal_at',
+            ])
+            ->get();
 
-    $avgMood = round(
-        $journals->pluck('skor_mood')
-            ->map(fn ($v) => is_numeric($v) ? (int) $v : null)
-            ->filter()
-            ->avg(),
-        2
-    );
+        // ================================
+        // STATISTIK
+        // ================================
+        $journals = JournalEntry::all();
 
-    // ================================
-    // ACCOUNT REQUEST
-    // ================================
-    $accountRequests = AccountRequest::with('user')
-        ->where('status', 'pending')
-        ->latest()
-        ->get();
+        $totalUsers    = User::where('role_id', '!=', 1)->count();
+        $totalJournals = $journals->count();
 
-    return view('dashboard', compact(
-        'journals',
-        'totalUsers',
-        'totalJournals',
-        'avgMood',
-        'usersWithJournal',
-        'search',
-        'accountRequests'
-    ));
+        $avgMood = round(
+            $journals->pluck('skor_mood')
+                ->map(fn ($v) => is_numeric($v) ? (int) $v : null)
+                ->filter()
+                ->avg(),
+            2
+        );
+
+        // ================================
+        // ACCOUNT REQUEST
+        // ================================
+        $accountRequests = AccountRequest::with('user')
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+
+        return view('dashboard', compact(
+            'journals',
+            'totalUsers',
+            'totalJournals',
+            'avgMood',
+            'usersWithJournal',
+            'search',
+            'accountRequests'
+        ));
     }
 
     // ================================
@@ -95,7 +112,6 @@ class AdminController extends Controller
             'user_id' => $user->id,
             'email'   => $user->email,
             'role'    => $user->role->name,
-            'path'    => request()->path(),
         ]);
 
         return view('profile.edit', compact('user'));
@@ -105,26 +121,13 @@ class AdminController extends Controller
     {
         $user = auth()->user();
 
-        Log::info('ADMIN UPDATE PROFILE HIT', [
-            'user_id' => $user->id,
-            'email'   => $user->email,
-            'role'    => $user->role->name,
-            'method'  => request()->method(),
-            'path'    => request()->path(),
-            'url'     => request()->fullUrl(),
-        ]);
-
         $request->validate([
             'name'     => 'required|string|max:255',
             'bio'      => 'nullable|string|max:500',
             'location' => 'nullable|string|max:255',
         ]);
 
-        $user->update([
-            'name'     => $request->name,
-            'bio'      => $request->bio,
-            'location' => $request->location,
-        ]);
+        $user->update($request->only('name', 'bio', 'location'));
 
         return redirect()->route('admin.profile')->with([
             'success'   => 'Profil berhasil diperbarui.',
@@ -137,14 +140,12 @@ class AdminController extends Controller
     // ================================
     public function updatePassword(Request $request)
     {
-        $user = auth()->user();
-
         $request->validate([
             'current_password' => ['required', 'current_password'],
             'password'         => ['required', 'confirmed', 'min:8'],
         ]);
 
-        $user->update([
+        auth()->user()->update([
             'password' => bcrypt($request->password),
         ]);
 
@@ -174,7 +175,6 @@ class AdminController extends Controller
         }
 
         $user = User::findOrFail($id);
-
         JournalEntry::where('user_id', $user->id)->delete();
         $user->delete();
 
@@ -187,26 +187,20 @@ class AdminController extends Controller
     public function exportCsv()
     {
         $journals = JournalEntry::all();
-        $totalUsers = User::where('role_id', '!=', 1)->count();
-        $totalJournals = $journals->count();
-        $avgMood = round(floatval($journals->avg('skor_mood') ?? 0), 2);
-        $avgAnxiety = round(floatval($journals->avg('skor_kecemasan') ?? 0), 2);
-        $avgStress = round(floatval($journals->avg('skor_stres') ?? 0), 2);
 
         $path = storage_path('app/laporan.csv');
         $handle = fopen($path, 'w+');
 
         fputcsv($handle, ['Statistik', 'Nilai']);
-        fputcsv($handle, ['Total Pengguna', $totalUsers]);
-        fputcsv($handle, ['Total Jurnal', $totalJournals]);
-        fputcsv($handle, ['Rata-Rata Mood', $avgMood]);
-        fputcsv($handle, ['Rata-Rata Kecemasan', $avgAnxiety]);
-        fputcsv($handle, ['Rata-Rata Stres', $avgStress]);
+        fputcsv($handle, ['Total Pengguna', User::where('role_id', '!=', 1)->count()]);
+        fputcsv($handle, ['Total Jurnal', $journals->count()]);
+        fputcsv($handle, ['Rata-Rata Mood', round($journals->avg('skor_mood') ?? 0, 2)]);
+        fputcsv($handle, ['Rata-Rata Kecemasan', round($journals->avg('skor_kecemasan') ?? 0, 2)]);
+        fputcsv($handle, ['Rata-Rata Stres', round($journals->avg('skor_stres') ?? 0, 2)]);
 
         fclose($handle);
 
-        return response()->download($path, 'laporan.csv')
-                         ->deleteFileAfterSend(true);
+        return response()->download($path, 'laporan.csv')->deleteFileAfterSend(true);
     }
 
     // ================================
@@ -215,27 +209,13 @@ class AdminController extends Controller
     public function exportPdf()
     {
         $journals = JournalEntry::all();
-        $totalUsers = User::where('role_id', '!=', 1)->count();
-        $totalJournals = $journals->count();
-        $avgMood = round(floatval($journals->avg('skor_mood') ?? 0), 2);
-        $avgAnxiety = round(floatval($journals->avg('skor_kecemasan') ?? 0), 2);
-        $avgStress = round(floatval($journals->avg('skor_stres') ?? 0), 2);
 
         $html = "
             <h2>Laporan Statistik Jurnal Reflecto</h2>
             <p>Tanggal Cetak: " . now()->format('d M Y H:i') . "</p>
-            <table border='1' cellpadding='5' cellspacing='0' style='border-collapse: collapse; width: 100%;'>
-                <tr><th>Statistik</th><th>Nilai</th></tr>
-                <tr><td>Total Pengguna</td><td>{$totalUsers}</td></tr>
-                <tr><td>Total Jurnal</td><td>{$totalJournals}</td></tr>
-                <tr><td>Rata-Rata Mood</td><td>{$avgMood}</td></tr>
-                <tr><td>Rata-Rata Kecemasan</td><td>{$avgAnxiety}</td></tr>
-                <tr><td>Rata-Rata Stres</td><td>{$avgStress}</td></tr>
-            </table>
         ";
 
-        $pdf = Pdf::loadHTML($html);
-        return $pdf->download('laporan.pdf');
+        return Pdf::loadHTML($html)->download('laporan.pdf');
     }
 
     // ================================
@@ -249,19 +229,13 @@ class AdminController extends Controller
 
     public function approveAccountRequest($id)
     {
-        $request = AccountRequest::findOrFail($id);
-        $request->status = 'approved';
-        $request->save();
-
+        AccountRequest::findOrFail($id)->update(['status' => 'approved']);
         return back()->with('success', 'Permintaan berhasil disetujui.');
     }
 
     public function rejectAccountRequest($id)
     {
-        $request = AccountRequest::findOrFail($id);
-        $request->status = 'rejected';
-        $request->save();
-
+        AccountRequest::findOrFail($id)->update(['status' => 'rejected']);
         return back()->with('success', 'Permintaan berhasil ditolak.');
     }
 }

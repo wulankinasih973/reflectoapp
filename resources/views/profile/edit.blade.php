@@ -12,10 +12,6 @@
         </div>
     @endif
 
-    @php
-        $user->refresh();
-    @endphp
-
     <div class="bg-white shadow rounded-lg p-6">
 
         {{-- Tabs --}}
@@ -79,70 +75,55 @@
                            class="mt-1 block w-full border rounded px-3 py-2" required>
                 </div>
 
-               <div>
-    <label class="block text-sm font-medium text-gray-700">Password Baru</label>
-        <div class="relative">
-            <input
-                type="password"
-                id="password"
-                name="password"
-                class="mt-1 block w-full border rounded px-3 py-2 pr-10"
-                required>
-            <button type="button"
-                class="toggle-password absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
-                data-target="password">
-                👁️
-            </button>
-        </div>
-    </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Password Baru</label>
+                    <div class="relative">
+                        <input type="password" id="password" name="password"
+                               class="mt-1 block w-full border rounded px-3 py-2 pr-10" required>
+                        <button type="button"
+                                class="toggle-password absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
+                                data-target="password">👁️</button>
+                    </div>
+                </div>
 
-    <div>
-        <label class="block text-sm font-medium text-gray-700">Masukkan Lagi Password Baru</label>
-        <div class="relative">
-            <input
-                type="password"
-                id="password_confirmation"
-                name="password_confirmation"
-                class="mt-1 block w-full border rounded px-3 py-2 pr-10"
-                required
-            >
-            <button type="button"
-                class="toggle-password absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
-                data-target="password_confirmation">
-                👁️
-            </button>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Masukkan Lagi Password Baru</label>
+                    <div class="relative">
+                        <input type="password" id="password_confirmation" name="password_confirmation"
+                               class="mt-1 block w-full border rounded px-3 py-2 pr-10" required>
+                        <button type="button"
+                                class="toggle-password absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
+                                data-target="password_confirmation">👁️</button>
+                    </div>
+                </div>
+            </form>
         </div>
-    </div>
 
         {{-- PREVIEW TAB --}}
         <div id="preview-tab-content" class="hidden">
             <div class="flex flex-col items-center">
-                <div class="mb-4"></div>
-
-                <h2 class="text-xl font-bold">{{ $user->name }}</h2>
-                <p class="mt-2 text-gray-700">{{ $user->bio ?: '—' }}</p>
-                <p class="mt-1 text-gray-500">{{ $user->location ?: '—' }}</p>
+                <h2 class="text-xl font-bold">{{ auth()->user()->name }}</h2>
+                <p class="mt-2 text-gray-700">{{ auth()->user()->bio ?: '—' }}</p>
+                <p class="mt-1 text-gray-500">{{ auth()->user()->location ?: '—' }}</p>
             </div>
         </div>
 
     </div>
 </div>
-<script>
-    document.querySelectorAll('.toggle-password').forEach(button => {
-        button.addEventListener('click', () => {
-            const targetId = button.getAttribute('data-target');
-            const input = document.getElementById(targetId);
-            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-            input.setAttribute('type', type);
-            button.textContent = type === 'password' ? '👁️' : '🙈';
-        });
-    });
-</script>
 @endsection
 
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', () => {
+            const input = document.getElementById(button.dataset.target);
+            const type = input.type === 'password' ? 'text' : 'password';
+            input.type = type;
+            button.textContent = type === 'password' ? '👁️' : '🙈';
+        });
+    });
 
     const tabs = {
         profile: document.getElementById('profile-tab-content'),

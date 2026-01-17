@@ -27,13 +27,13 @@ class AuthenticatedSessionController extends Controller
         // Proses autentikasi
         $request->authenticate();
 
-        // Regenerate session untuk keamanan session hijacking
+        // Regenerate session
         $request->session()->regenerate();
 
         // Ambil user yang sedang login
         $user = auth()->user();
 
-        // Cek apakah user aktif, hanya untuk role user
+        // Cek apakah user aktif, untuk role user
         if ($user->role->name !== 'admin' && isset($user->is_active) && !$user->is_active) {
             Auth::logout();
             return back()->withErrors([
