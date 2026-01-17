@@ -48,13 +48,13 @@
         color: #5aa897;
     }
 
-    /* Password wrapper untuk icon mata */
+    /* Password wrapper */
     .password-wrapper {
         position: relative;
     }
 
     .password-wrapper input {
-        padding-right: 40px; /* ruang untuk icon */
+        padding-right: 40px;
     }
 
     .toggle-password {
@@ -74,7 +74,42 @@
     .toggle-password:hover {
         color: #5aa897;
     }
+
+    /* SUCCESS POPUP */
+    .success-popup {
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #59cab0;
+        color: #ffffff;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        z-index: 9999;
+        opacity: 1;
+        transition: opacity 0.5s ease;
+    }
 </style>
+
+{{-- POPUP SUCCESS (SETELAH GANTI PASSWORD / LOGOUT) --}}
+@if(session('success'))
+    <div id="success-popup" class="success-popup">
+        {{ session('success') }}
+    </div>
+
+    <script>
+        setTimeout(() => {
+            const popup = document.getElementById('success-popup');
+            if (popup) {
+                popup.style.opacity = '0';
+                setTimeout(() => popup.remove(), 500);
+            }
+        }, 3000);
+    </script>
+@endif
 
 <div class="min-h-screen flex items-center justify-center px-4">
     <div class="w-full auth-card mx-auto">
@@ -94,7 +129,9 @@
 
             <div class="mb-4">
                 <label class="block text-gray-700 mb-1 font-medium text-sm">Email</label>
-                <input type="email" name="email" value="{{ old('email') }}"
+                <input type="email"
+                       name="email"
+                       value="{{ old('email') }}"
                        class="w-full px-3 py-2 auth-input"
                        required autofocus>
                 @error('email')
@@ -105,10 +142,14 @@
             <div class="mb-4">
                 <label class="block text-gray-700 mb-1 font-medium text-sm">Password</label>
                 <div class="password-wrapper">
-                    <input type="password" name="password" id="password"
+                    <input type="password"
+                           name="password"
+                           id="password"
                            class="w-full px-3 py-2 auth-input"
                            required>
-                    <button type="button" class="toggle-password" data-target="password">
+                    <button type="button"
+                            class="toggle-password"
+                            data-target="password">
                         👁️
                     </button>
                 </div>
@@ -118,7 +159,7 @@
             </div>
 
             <button type="submit"
-                class="w-full primary-btn text-white font-semibold rounded-xl shadow-md">
+                    class="w-full primary-btn text-white font-semibold rounded-xl shadow-md">
                 Log In
             </button>
         </form>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Auth;
 use App\Models\AccountRequest;
 
 class ProfileController extends Controller
@@ -61,11 +62,13 @@ class ProfileController extends Controller
         // Update password
         $user->password = Hash::make($request->password);
         $user->save();
+        Auth::logout();
 
-        return redirect()
-            ->route('profile.edit', ['tab' => 'password'])
-            ->with('success', 'Password berhasil diperbarui.')
-            ->with('activeTab', 'password');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
+        return redirect('/login')
+        ->with('success', 'Password berhasil diperbarui. Silakan login kembali.');
     }
 
     public function accountRequestForm()

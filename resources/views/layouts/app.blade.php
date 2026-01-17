@@ -24,6 +24,26 @@
 
 <body class="font-body antialiased min-h-screen bg-gradient-to-br from-white via-[#E9FFF8] to-[#C9FFE9]">
 
+    {{-- GLOBAL SUCCESS POPUP --}}
+    @if(session('success'))
+        <div id="success-popup"
+            class="fixed top-20 left-1/2 transform -translate-x-1/2
+                    bg-emerald-400 text-white px-6 py-3 rounded-xl shadow-lg
+                    z-[9999] font-semibold transition-opacity duration-500">
+            {{ session('success') }}
+        </div>
+
+        <script>
+            setTimeout(() => {
+                const popup = document.getElementById('success-popup');
+                if (popup) {
+                    popup.style.opacity = '0';
+                    setTimeout(() => popup.remove(), 500);
+                }
+            }, 3000);
+        </script>
+    @endif
+
     <!-- 🌿 NAVBAR -->
     <nav class="fixed top-0 left-0 w-full backdrop-blur shadow-sm z-50
                 bg-gradient-to-b from-[#c9ffe9] to-[#aef5de]">

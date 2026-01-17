@@ -145,14 +145,23 @@ class AdminController extends Controller
             'password'         => ['required', 'confirmed', 'min:8'],
         ]);
 
-        auth()->user()->update([
-            'password' => bcrypt($request->password),
+        $admin = auth()->user();
+
+        // Update password
+        $admin->update([
+            'password' => Hash::make($request->password),
         ]);
 
-        return redirect()->route('admin.profile')->with([
-            'success'   => 'Password berhasil diperbarui.',
-            'activeTab' => 'password',
-        ]);
+        // AUTO LOGOUT ADMIN
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        // Redirect ke LOGIN
+        return redirect()->route('login')->with(
+            'success',
+            'Password berhasil diperbarui. Silakan login kembali.'
+        );
     }
 
     // ================================

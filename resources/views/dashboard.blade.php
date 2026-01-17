@@ -4,22 +4,6 @@
 <div class="w-full flex justify-center">
     <div class="w-full max-w-5xl px-4 pt-6 pb-8">
 
-        {{-- FLASH MESSAGE --}}
-        @if(session('success'))
-            <div id="flash-message" class="fixed inset-0 flex items-start justify-center z-50 mt-10">
-                <div class="bg-blue-600 text-white px-6 py-4 rounded-lg shadow-lg animate-slide-in max-w-lg text-center">
-                    {{ session('success') }}
-                </div>
-            </div>
-        @endif
-        @if(session('error'))
-            <div id="flash-message" class="fixed inset-0 flex items-start justify-center z-50 mt-10">
-                <div class="bg-red-600 text-white px-6 py-4 rounded-lg shadow-lg animate-slide-in max-w-lg text-center">
-                    {{ session('error') }}
-                </div>
-            </div>
-        @endif
-
         {{-- SLOGAN REFLECTO --}}
         <div class="mb-6 text-center mt-2">
             <h1 class="text-4xl md:text-5xl font-title font-bold text-[#1F2937] tracking-wide">

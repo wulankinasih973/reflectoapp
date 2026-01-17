@@ -2,16 +2,7 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto py-12">
-
-    {{-- SUCCESS POPUP --}}
-    @if(session('success'))
-        <div id="success-popup"
-             style="opacity:1; transition:opacity .5s;"
-             class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded shadow-lg z-50 font-semibold">
-            {{ session('success') }}
-        </div>
-    @endif
-
+    
     <div class="bg-white shadow rounded-lg p-6">
 
         {{-- Tabs --}}
@@ -71,8 +62,13 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Password Saat Ini</label>
-                    <input type="password" name="current_password"
-                           class="mt-1 block w-full border rounded px-3 py-2" required>
+                    <div class="relative">
+                        <input type="password" id="current_password" name="current_password"
+                               class="mt-1 block w-full border rounded px-3 py-2 pr-10" required>
+                        <button type="button"
+                                class="toggle-password absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
+                                data-target="current_password">👁️</button>
+                    </div>
                 </div>
 
                 <div>
@@ -96,6 +92,11 @@
                                 data-target="password_confirmation">👁️</button>
                     </div>
                 </div>
+
+                <button type="submit"
+                        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 mt-6">
+                    Simpan Password
+                </button>
             </form>
         </div>
 
