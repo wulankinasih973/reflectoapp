@@ -123,6 +123,11 @@ Route::middleware(['auth', 'verified', 'checkrole:admin'])->group(function () {
     Route::get('/admin/users/{id}/journal', [AdminController::class, 'viewJournal'])
         ->name('admin.users.journal');
 
+    /*Route::delete(
+        '/admin/account-request/{id}',
+        [AdminController::class, 'destroy']
+        )->name(name: 'admin.account-request.destroy');
+
     /*
     |--------------------------------------------------------------------------
     | Permintaan Penghapusan Akun (ADMIN)

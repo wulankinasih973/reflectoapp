@@ -49,6 +49,18 @@
                                         <span class="text-green-600 text-xl">✔</span>
                                     @elseif($r->status === 'rejected')
                                         <span class="text-red-600 text-xl">✖</span>
+
+                                        {{-- tombol hapus --}}
+                                    {{--<form method="POST"
+                                        action="{{ route('admin.account-request.destroy', $r->id) }}"
+                                        onsubmit="return confirm('Yakin ingin menghapus request ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="text-gray-600 text-xl hover:text-red-700">
+                                            🗑
+                                        </button>
+                                    </form> --}}
                                     @endif
                                 </td>
                             </tr>

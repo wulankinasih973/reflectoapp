@@ -104,6 +104,14 @@ class AdminController extends Controller
     // ================================
     // PROFIL ADMIN
     // ================================
+    
+    /*public function destroy($id)
+    {
+        $request = AccountRequest::findOrFail($id);
+        $request->delete();
+
+        return redirect()->back()->with('success', 'Request dihapus');
+    }*/
     public function profile()
     {
         $user = auth()->user();
