@@ -70,7 +70,7 @@ class JournalController extends Controller
 
     $journal->delete();
 
-    return redirect()->route('dashboard')->with('status', 'Jurnal berhasil dihapus.');
+    return redirect()->route('dashboard')->with('success', 'Jurnal berhasil dihapus.');
     }
 
     // List jurnal user
